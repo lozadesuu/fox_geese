@@ -11,33 +11,49 @@ public class Game {
         FOX_WIN
     }
 
+    public enum GameMode {
+        PLAYER_VS_PLAYER,
+        PLAYER_VS_BOT_GEESE,  // Игрок за лису, бот за гусей
+        PLAYER_VS_BOT_FOX     // Игрок за гусей, бот за лису
+    }
+
     private Board board;
     private List<Fox> foxes;
     private List<Goose> geese;
     private GameState currentState;
+    private GameMode gameMode;
+    private PlayerBot bot;
     private int geeseEaten;
     private int totalGeese;
     private int foxCount;
 
-    public Game(int foxCount, int geeseCount) {
+    public Game(int foxCount, int geeseCount, GameMode gameMode) {
         this.foxCount = foxCount;
         this.totalGeese = geeseCount;
+        this.gameMode = gameMode;
         this.board = new Board();
         this.foxes = new ArrayList<>();
         this.geese = new ArrayList<>();
         this.geeseEaten = 0;
         this.currentState = GameState.GEESE_TURN;
+
+        if (gameMode != GameMode.PLAYER_VS_PLAYER) {
+            this.bot = new PlayerBot();
+        }
+
         initializeGame();
     }
 
     private void initializeGame() {
         board.placeInitialPieces(foxCount, totalGeese);
+
         if (foxCount == 1) {
             foxes.add(new Fox(new Position(3, 3)));
         } else {
             foxes.add(new Fox(new Position(3, 2)));
             foxes.add(new Fox(new Position(3, 4)));
         }
+
         for (int i = 0; i < board.getSize(); i++) {
             for (int j = 0; j < board.getSize(); j++) {
                 if (board.getCell(i, j) == 'G') {
@@ -47,7 +63,6 @@ public class Game {
         }
     }
 
-
     public void start() {
         ConsoleUI ui = new ConsoleUI();
 
@@ -56,11 +71,45 @@ public class Game {
 
             if (currentState == GameState.GEESE_TURN) {
                 ui.displayMessage("\n=== ХОД ГУСЕЙ ===");
-                makeGooseMove(ui);
+
+                if (gameMode == GameMode.PLAYER_VS_BOT_GEESE) {
+                    ui.displayMessage("Бот думает...");
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                    }
+                    bot.makeGooseMove(board, geese);
+                } else {
+                    makeGooseMove(ui);
+                }
+
                 currentState = GameState.FOX_TURN;
+
             } else if (currentState == GameState.FOX_TURN) {
                 ui.displayMessage("\n=== ХОД ЛИСЫ ===");
-                makeFoxMove(ui);
+                if (gameMode == GameMode.PLAYER_VS_BOT_FOX) {
+                    ui.displayMessage("Бот думает...");
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                    }
+                    bot.makeFoxMove(board, foxes, geese);
+
+                    int alive = 0;
+                    for (Goose goose : geese) {
+                        if (goose.isAlive()) {
+                            alive++;
+                        }
+                    }
+                    geeseEaten = totalGeese - alive;
+
+                    if (geeseEaten > 0) {
+                        ui.displayMessage("Бот съел гуся! Съедено: " + geeseEaten);
+                    }
+                } else {
+                    makeFoxMove(ui);
+                }
+
                 currentState = GameState.GEESE_TURN;
             }
         }
@@ -121,6 +170,7 @@ public class Game {
             if (fox.canMove(board, to)) {
                 board.setCell(from.getRow(), from.getCol(), '.');
                 board.setCell(to.getRow(), to.getCol(), 'F');
+
                 if (fox.isCapture(to)) {
                     Position capturedPos = fox.getCapturedGoosePosition(to);
                     board.setCell(capturedPos.getRow(), capturedPos.getCol(), '.');
@@ -128,7 +178,21 @@ public class Game {
                     if (capturedGoose != null) {
                         capturedGoose.capture();
                         geeseEaten++;
-                        ui.displayMessage("Гусь съеден! Всего съедено: " + geeseEaten);
+
+                        int winCount;
+                        if (totalGeese == 13) {
+                            winCount = 8;
+                        } else {
+                            winCount = 12;
+                        }
+                        int remaining = winCount - geeseEaten;
+
+                        ui.displayMessage("🦊 Гусь съеден! Съедено: " + geeseEaten + " / " + winCount);
+                        if (remaining > 0) {
+                            ui.displayMessage("   Осталось съесть: " + remaining);
+                        } else {
+                            ui.displayMessage("   🎉 Достаточно для победы!");
+                        }
                     }
                 }
 
@@ -210,9 +274,9 @@ public class Game {
 
     private String getWinnerMessage() {
         if (currentState == GameState.FOX_WIN) {
-            return "\uD83E\uDD8A ЛИСА ПОБЕДИЛА! Съедено гусей: " + geeseEaten;
+            return "🦊 ЛИСА ПОБЕДИЛА! Съедено гусей: " + geeseEaten;
         } else {
-            return "\uD83E\uDEBF ГУСИ ПОБЕДИЛИ! Лиса заблокирована.";
+            return "🦆 ГУСИ ПОБЕДИЛИ! Лиса заблокирована.";
         }
     }
 }

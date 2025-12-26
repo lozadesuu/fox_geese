@@ -114,6 +114,24 @@ public class ConsoleUI {
             return 1;
         }
     }
+    public Game.GameMode selectGameMode() {
+        System.out.println("\nВыберите режим игры:");
+        System.out.println("1) Игрок против игрока");
+        System.out.println("2) Игрок (лиса) против бота (гуси)");
+        System.out.println("3) Игрок (гуси) против бота (лиса)");
+        System.out.print("Ваш выбор: ");
+
+        int choice = scanner.nextInt();
+
+        if (choice == 2) {
+            return Game.GameMode.PLAYER_VS_BOT_GEESE;
+        } else if (choice == 3) {
+            return Game.GameMode.PLAYER_VS_BOT_FOX;
+        } else {
+            return Game.GameMode.PLAYER_VS_PLAYER;
+        }
+    }
+
 
     public void displayMessage(String message) {
         System.out.println(message);

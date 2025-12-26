@@ -6,8 +6,9 @@ public class Main {
 
         int geeseCount = ui.selectGeeseCount();
         int foxCount = ui.selectFoxCount();
+        Game.GameMode gameMode = ui.selectGameMode();
 
-        Game game = new Game(foxCount, geeseCount);
+        Game game = new Game(foxCount, geeseCount, gameMode);
         game.start();
     }
 }
