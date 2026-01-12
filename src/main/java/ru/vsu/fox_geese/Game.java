@@ -13,8 +13,9 @@ public class Game {
 
     public enum GameMode {
         PLAYER_VS_PLAYER,
-        PLAYER_VS_BOT_GEESE,  // Игрок за лису, бот за гусей
-        PLAYER_VS_BOT_FOX     // Игрок за гусей, бот за лису
+        PLAYER_VS_BOT_GEESE,
+        PLAYER_VS_BOT_FOX,
+        BOT_VS_BOT
     }
 
     private Board board;
@@ -72,7 +73,7 @@ public class Game {
             if (currentState == GameState.GEESE_TURN) {
                 ui.displayMessage("\n=== ХОД ГУСЕЙ ===");
 
-                if (gameMode == GameMode.PLAYER_VS_BOT_GEESE) {
+                if (gameMode == GameMode.PLAYER_VS_BOT_GEESE || gameMode == GameMode.BOT_VS_BOT) {
                     ui.displayMessage("Бот думает...");
                     try {
                         Thread.sleep(1000);
@@ -87,7 +88,7 @@ public class Game {
 
             } else if (currentState == GameState.FOX_TURN) {
                 ui.displayMessage("\n=== ХОД ЛИСЫ ===");
-                if (gameMode == GameMode.PLAYER_VS_BOT_FOX) {
+                if (gameMode == GameMode.PLAYER_VS_BOT_FOX || gameMode == GameMode.BOT_VS_BOT) {
                     ui.displayMessage("Бот думает...");
                     try {
                         Thread.sleep(1000);
@@ -111,6 +112,13 @@ public class Game {
                 }
 
                 currentState = GameState.GEESE_TURN;
+            }
+
+            if (gameMode == GameMode.BOT_VS_BOT) {
+                try {
+                    Thread.sleep(800);
+                } catch (InterruptedException e) {
+                }
             }
         }
 
