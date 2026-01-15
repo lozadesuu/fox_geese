@@ -93,7 +93,10 @@ public class Board {
     }
 
     public boolean isEmpty(int row, int col) {
-        return getCell(row, col) == '.';
+        if (!isValidCell(row, col)) {
+            return false;
+        }
+        return grid[row][col] == '.';
     }
 
     public int getSize() {

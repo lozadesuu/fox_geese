@@ -36,13 +36,36 @@ public class Game {
         this.foxes = new ArrayList<>();
         this.geese = new ArrayList<>();
         this.geeseEaten = 0;
-        this.currentState = GameState.GEESE_TURN;
+
+        if (gameMode == GameMode.PLAYER_VS_BOT_FOX) {
+            this.currentState = GameState.GEESE_TURN;
+        } else if (gameMode == GameMode.PLAYER_VS_BOT_GEESE) {
+            this.currentState = GameState.GEESE_TURN;
+        } else {
+            this.currentState = GameState.GEESE_TURN;
+        }
 
         if (gameMode != GameMode.PLAYER_VS_PLAYER) {
             this.bot = new PlayerBot();
         }
 
         initializeGame();
+    }
+
+    public GameState getCurrentState() {
+        return currentState;
+    }
+
+    public GameMode getGameMode() {
+        return gameMode;
+    }
+
+    public Board getBoard() {
+        return board;
+    }
+
+    public int getGeeseEaten() {
+        return geeseEaten;
     }
 
     private void initializeGame() {
@@ -64,227 +87,163 @@ public class Game {
         }
     }
 
-    public void start() {
-        ConsoleUI ui = new ConsoleUI();
+    public boolean makeGooseMove(Position from, Position to) {
+        if (currentState != GameState.GEESE_TURN) {
+            return false;
+        }
 
-        while (!isGameOver()) {
-            ui.displayBoard(board, currentState);
+        for (Goose goose : geese) {
+            if (goose.isAlive() && goose.getPosition().equals(from)) {
+                if (goose.canMove(board, to)) {
+                    board.setCell(from.getRow(), from.getCol(), '.');
+                    board.setCell(to.getRow(), to.getCol(), 'G');
+                    goose.setPosition(to);
+                    currentState = GameState.FOX_TURN;
 
-            if (currentState == GameState.GEESE_TURN) {
-                ui.displayMessage("\n=== ХОД ГУСЕЙ ===");
-
-                if (gameMode == GameMode.PLAYER_VS_BOT_GEESE || gameMode == GameMode.BOT_VS_BOT) {
-                    ui.displayMessage("Бот думает...");
-                    try {
-                        Thread.sleep(1000);
-                    } catch (InterruptedException e) {
+                    if (checkGeeseWin()) {
+                        currentState = GameState.GEESE_WIN;
+                        System.out.println("ГУСИ ПОБЕДИЛИ после своего хода!");
+                    } else if (checkFoxWin()) {
+                        currentState = GameState.FOX_WIN;
                     }
-                    bot.makeGooseMove(board, geese);
-                } else {
-                    makeGooseMove(ui);
-                }
-
-                currentState = GameState.FOX_TURN;
-
-            } else if (currentState == GameState.FOX_TURN) {
-                ui.displayMessage("\n=== ХОД ЛИСЫ ===");
-                if (gameMode == GameMode.PLAYER_VS_BOT_FOX || gameMode == GameMode.BOT_VS_BOT) {
-                    ui.displayMessage("Бот думает...");
-                    try {
-                        Thread.sleep(1000);
-                    } catch (InterruptedException e) {
-                    }
-                    bot.makeFoxMove(board, foxes, geese);
-
-                    int alive = 0;
-                    for (Goose goose : geese) {
-                        if (goose.isAlive()) {
-                            alive++;
-                        }
-                    }
-                    geeseEaten = totalGeese - alive;
-
-                    if (geeseEaten > 0) {
-                        ui.displayMessage("Бот съел гуся! Съедено: " + geeseEaten);
-                    }
-                } else {
-                    makeFoxMove(ui);
-                }
-
-                currentState = GameState.GEESE_TURN;
-            }
-
-            if (gameMode == GameMode.BOT_VS_BOT) {
-                try {
-                    Thread.sleep(800);
-                } catch (InterruptedException e) {
+                    return true;
                 }
             }
         }
-
-        ui.displayBoard(board, currentState);
-        ui.displayMessage("\n" + getWinnerMessage());
-    }
-
-    private void makeGooseMove(ConsoleUI ui) {
-        while (true) {
-            ui.displayMessage("Введите координаты гуся (строка столбец): ");
-            Position from = ui.readPosition();
-
-            if (board.getCell(from.getRow(), from.getCol()) != 'G') {
-                ui.displayMessage("На этой клетке нет гуся!");
-                continue;
-            }
-
-            Goose goose = findGooseAt(from);
-            if (goose == null || !goose.isAlive()) {
-                ui.displayMessage("Гусь не найден!");
-                continue;
-            }
-
-            ui.displayMessage("Введите куда пойти (строка столбец): ");
-            Position to = ui.readPosition();
-
-            if (goose.canMove(board, to)) {
-                board.setCell(from.getRow(), from.getCol(), '.');
-                board.setCell(to.getRow(), to.getCol(), 'G');
-                goose.setPosition(to);
-                return;
-            } else {
-                ui.displayMessage("Недопустимый ход!");
-            }
-        }
-    }
-
-    private void makeFoxMove(ConsoleUI ui) {
-        while (true) {
-            ui.displayMessage("Введите координаты лисы (строка столбец): ");
-            Position from = ui.readPosition();
-
-            if (board.getCell(from.getRow(), from.getCol()) != 'F') {
-                ui.displayMessage("На этой клетке нет лисы!");
-                continue;
-            }
-
-            Fox fox = findFoxAt(from);
-            if (fox == null) {
-                ui.displayMessage("Лиса не найдена!");
-                continue;
-            }
-
-            ui.displayMessage("Введите куда пойти (строка столбец): ");
-            Position to = ui.readPosition();
-
-            if (fox.canMove(board, to)) {
-                board.setCell(from.getRow(), from.getCol(), '.');
-                board.setCell(to.getRow(), to.getCol(), 'F');
-
-                if (fox.isCapture(to)) {
-                    Position capturedPos = fox.getCapturedGoosePosition(to);
-                    board.setCell(capturedPos.getRow(), capturedPos.getCol(), '.');
-                    Goose capturedGoose = findGooseAt(capturedPos);
-                    if (capturedGoose != null) {
-                        capturedGoose.capture();
-                        geeseEaten++;
-
-                        int winCount;
-                        if (totalGeese == 13) {
-                            winCount = 8;
-                        } else {
-                            winCount = 12;
-                        }
-                        int remaining = winCount - geeseEaten;
-
-                        ui.displayMessage("🦊 Гусь съеден! Съедено: " + geeseEaten + " / " + winCount);
-                        if (remaining > 0) {
-                            ui.displayMessage("   Осталось съесть: " + remaining);
-                        } else {
-                            ui.displayMessage("   🎉 Достаточно для победы!");
-                        }
-                    }
-                }
-
-                fox.setPosition(to);
-                return;
-            } else {
-                ui.displayMessage("Недопустимый ход!");
-            }
-        }
-    }
-
-    public boolean isGameOver() {
-        int winCount;
-        if (totalGeese == 13) {
-            winCount = 8;
-        } else {
-            winCount = 12;
-        }
-
-        if (geeseEaten >= winCount) {
-            currentState = GameState.FOX_WIN;
-            return true;
-        }
-
-        boolean allFoxesBlocked = true;
-        for (Fox fox : foxes) {
-            if (!isFoxBlocked(fox)) {
-                allFoxesBlocked = false;
-                break;
-            }
-        }
-
-        if (allFoxesBlocked) {
-            currentState = GameState.GEESE_WIN;
-            return true;
-        }
-
         return false;
     }
 
-    private boolean isFoxBlocked(Fox fox) {
-        Position pos = fox.getPosition();
-        int row = pos.getRow();
-        int col = pos.getCol();
-        int[][] directions = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
-
-        for (int[] dir : directions) {
-            Position adjacent = new Position(row + dir[0], col + dir[1]);
-            if (fox.canMove(board, adjacent)) {
-                return false;
-            }
-
-            Position jump = new Position(row + dir[0] * 2, col + dir[1] * 2);
-            if (fox.canMove(board, jump)) {
-                return false;
-            }
+    public boolean makeFoxMove(Position from, Position to) {
+        if (currentState != GameState.FOX_TURN) {
+            return false;
         }
 
-        return true;
-    }
-
-    private Goose findGooseAt(Position pos) {
-        for (Goose goose : geese) {
-            if (goose.isAlive() && goose.getPosition().equals(pos)) {
-                return goose;
-            }
-        }
-        return null;
-    }
-
-    private Fox findFoxAt(Position pos) {
         for (Fox fox : foxes) {
-            if (fox.getPosition().equals(pos)) {
-                return fox;
+            if (fox.getPosition().equals(from)) {
+                if (fox.canMove(board, to)) {
+                    board.setCell(from.getRow(), from.getCol(), '.');
+                    board.setCell(to.getRow(), to.getCol(), 'F');
+
+                    if (fox.isCapture(to)) {
+                        Position capturedPos = fox.getCapturedGoosePosition(to);
+                        board.setCell(capturedPos.getRow(), capturedPos.getCol(), '.');
+
+                        for (Goose goose : geese) {
+                            if (goose.isAlive() && goose.getPosition().equals(capturedPos)) {
+                                goose.capture();
+                                geeseEaten++;
+                                System.out.println("Гусь съеден! Всего съедено: " + geeseEaten);
+                                break;
+                            }
+                        }
+                    }
+
+                    fox.setPosition(to);
+                    currentState = GameState.GEESE_TURN;
+
+                    if (checkFoxWin()) {
+                        currentState = GameState.FOX_WIN;
+                        System.out.println("Лисы победили! Съедено гусей: " + geeseEaten);
+                    } else if (checkGeeseWin()) {
+                        currentState = GameState.GEESE_WIN;
+                        System.out.println("Гуси победили! Лисы заблокированы.");
+                    }
+                    return true;
+                }
             }
         }
-        return null;
+        return false;
     }
 
-    private String getWinnerMessage() {
-        if (currentState == GameState.FOX_WIN) {
-            return "🦊 ЛИСА ПОБЕДИЛА! Съедено гусей: " + geeseEaten;
-        } else {
-            return "🦆 ГУСИ ПОБЕДИЛИ! Лиса заблокирована.";
+    public void makeBotMoveForGeese() {
+        if (bot != null && currentState == GameState.GEESE_TURN) {
+            bot.makeGooseMove(board, geese);
+            currentState = GameState.FOX_TURN;
+
+            if (checkFoxWin()) {
+                currentState = GameState.FOX_WIN;
+                System.out.println("Лисы победили! Съедено гусей: " + geeseEaten);
+            } else if (checkGeeseWin()) {
+                currentState = GameState.GEESE_WIN;
+                System.out.println("Гуси победили!");
+            }
         }
+    }
+
+    public void makeBotMoveForFoxes() {
+        if (bot != null && currentState == GameState.FOX_TURN) {
+            bot.makeFoxMove(board, foxes, geese);
+
+            int alive = 0;
+            for (Goose goose : geese) {
+                if (goose.isAlive()) {
+                    alive++;
+                }
+            }
+            geeseEaten = totalGeese - alive;
+
+            currentState = GameState.GEESE_TURN;
+
+            if (checkFoxWin()) {
+                currentState = GameState.FOX_WIN;
+                System.out.println("Лисы победили! Съедено гусей: " + geeseEaten);
+            } else if (checkGeeseWin()) {
+                currentState = GameState.GEESE_WIN;
+                System.out.println("Гуси победили!");
+            }
+        }
+    }
+
+    private boolean checkFoxWin() {
+        int geeseAlive = 0;
+        for (Goose goose : geese) {
+            if (goose.isAlive()) {
+                geeseAlive++;
+            }
+        }
+
+        if (totalGeese == 13) {
+            return (geeseEaten >= 8) || (geeseAlive < 8);
+        } else {
+            return (geeseEaten >= 12) || (geeseAlive < 12);
+        }
+    }
+
+    private boolean checkGeeseWin() {
+        boolean allFoxesSurrounded = true;
+
+        for (Fox fox : foxes) {
+            if (!fox.isSurrounded(board)) {
+                boolean canMove = false;
+                Position pos = fox.getPosition();
+                int row = pos.getRow();
+                int col = pos.getCol();
+
+                int[][] moves = {
+                        {row-1, col},
+                        {row+1, col},
+                        {row, col-1},
+                        {row, col+1},
+                        {row-2, col},
+                        {row+2, col},
+                        {row, col-2},
+                        {row, col+2}
+                };
+
+                for (int[] move : moves) {
+                    Position to = new Position(move[0], move[1]);
+                    if (fox.canMove(board, to)) {
+                        canMove = true;
+                        break;
+                    }
+                }
+                if (canMove) {
+                    return false;
+                }
+            }
+        }
+
+        System.out.println("=== ВСЕ лисы заблокированы! ГУСИ ПОБЕДИЛИ! ===");
+        return true;
     }
 }

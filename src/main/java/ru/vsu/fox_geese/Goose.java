@@ -28,15 +28,21 @@ public class Goose {
     public boolean canMove(Board board, Position to) {
         if (!isAlive) return false;
 
-        int rowDiff = Math.abs(to.getRow() - position.getRow());
-        int colDiff = Math.abs(to.getCol() - position.getCol());
-        if ((rowDiff == 1 && colDiff == 0) || (rowDiff == 0 && colDiff == 1)) {
-            if (!board.isValidCell(to.getRow(), to.getCol())) {
-                return false;
-            }
-            return board.isEmpty(to.getRow(), to.getCol());
+        int rowDiff = to.getRow() - position.getRow();
+        int colDiff = to.getCol() - position.getCol();
+
+        if (Math.abs(rowDiff) + Math.abs(colDiff) != 1) {
+            return false;
         }
 
-        return false;
+        if (rowDiff > 0) {
+            return false;
+        }
+
+        if (!board.isValidCell(to.getRow(), to.getCol())) {
+            return false;
+        }
+
+        return board.isEmpty(to.getRow(), to.getCol());
     }
 }

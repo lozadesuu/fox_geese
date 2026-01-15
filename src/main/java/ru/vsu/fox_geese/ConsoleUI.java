@@ -13,12 +13,7 @@ public class ConsoleUI {
         char[][] grid = board.getGrid();
         int size = board.getSize();
 
-        boolean flipDisplay;
-        if (state == Game.GameState.FOX_TURN || state == Game.GameState.FOX_WIN) {
-            flipDisplay = true;
-        } else {
-            flipDisplay = false;
-        }
+        boolean flipDisplay = (state == Game.GameState.FOX_TURN || state == Game.GameState.FOX_WIN);
 
         if (flipDisplay) {
             System.out.println("\n  6  5  4  3  2  1  0   (вид со стороны лисы)");
@@ -28,31 +23,19 @@ public class ConsoleUI {
         System.out.println();
 
         for (int i = 0; i < size; i++) {
-            int displayRow;
-            if (flipDisplay) {
-                displayRow = size - 1 - i;
-            } else {
-                displayRow = i;
-            }
-
+            int displayRow = flipDisplay ? (size - 1 - i) : i;
             System.out.print(displayRow + " ");
 
             for (int j = 0; j < size; j++) {
-                int displayCol;
-                if (flipDisplay) {
-                    displayCol = size - 1 - j;
-                } else {
-                    displayCol = j;
-                }
-
+                int displayCol = flipDisplay ? (size - 1 - j) : j;
                 char cell = grid[displayRow][displayCol];
 
                 switch (cell) {
                     case 'F':
-                        System.out.print("\uD83E\uDD8A ");
+                        System.out.print("🦊 ");
                         break;
                     case 'G':
-                        System.out.print("\uD83E\uDEBF ");
+                        System.out.print("🪿 ");
                         break;
                     case '.':
                         System.out.print("·  ");
@@ -66,7 +49,6 @@ public class ConsoleUI {
         }
 
         System.out.println();
-
         if (flipDisplay) {
             System.out.println("Доска перевёрнута! Координаты вводите как обычно");
         }
@@ -91,12 +73,7 @@ public class ConsoleUI {
         System.out.print("Ваш выбор: ");
 
         int choice = scanner.nextInt();
-
-        if (choice == 1) {
-            return 13;
-        } else {
-            return 17;
-        }
+        return (choice == 1) ? 13 : 17;
     }
 
     public int selectFoxCount() {
@@ -106,12 +83,7 @@ public class ConsoleUI {
         System.out.print("Ваш выбор: ");
 
         int choice = scanner.nextInt();
-
-        if (choice == 2) {
-            return 2;
-        } else {
-            return 1;
-        }
+        return (choice == 2) ? 2 : 1;
     }
 
     public Game.GameMode selectGameMode() {
@@ -124,14 +96,11 @@ public class ConsoleUI {
 
         int choice = scanner.nextInt();
 
-        if (choice == 2) {
-            return Game.GameMode.PLAYER_VS_BOT_GEESE;
-        } else if (choice == 3) {
-            return Game.GameMode.PLAYER_VS_BOT_FOX;
-        } else if (choice == 4) {
-            return Game.GameMode.BOT_VS_BOT;
-        } else {
-            return Game.GameMode.PLAYER_VS_PLAYER;
+        switch (choice) {
+            case 2: return Game.GameMode.PLAYER_VS_BOT_GEESE;
+            case 3: return Game.GameMode.PLAYER_VS_BOT_FOX;
+            case 4: return Game.GameMode.BOT_VS_BOT;
+            default: return Game.GameMode.PLAYER_VS_PLAYER;
         }
     }
 

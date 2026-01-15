@@ -11,7 +11,6 @@ public class PlayerBot {
         this.random = new Random();
     }
 
-    // Ход гусей (бот управляет гусями)
     public void makeGooseMove(Board board, List<Goose> geese) {
         List<MoveOption> allMoves = new ArrayList<>();
 
@@ -29,7 +28,7 @@ public class PlayerBot {
                 Position to = new Position(newRow, newCol);
 
                 if (goose.canMove(board, to)) {
-                    allMoves.add(new MoveOption(goose, null, from, to));  // ← ИСПРАВЛЕНО
+                    allMoves.add(new MoveOption(goose, null, from, to));
                 }
             }
         }
@@ -38,11 +37,10 @@ public class PlayerBot {
             MoveOption chosenMove = allMoves.get(random.nextInt(allMoves.size()));
             board.setCell(chosenMove.from.getRow(), chosenMove.from.getCol(), '.');
             board.setCell(chosenMove.to.getRow(), chosenMove.to.getCol(), 'G');
-            chosenMove.goose.setPosition(chosenMove.to);  // ← ТЕПЕРЬ РАБОТАЕТ
+            chosenMove.goose.setPosition(chosenMove.to);
         }
     }
 
-    // Ход лисы (бот управляет лисой)
     public void makeFoxMove(Board board, List<Fox> foxes, List<Goose> geese) {
         List<MoveOption> allMoves = new ArrayList<>();
         List<MoveOption> captureMoves = new ArrayList<>();
@@ -58,7 +56,7 @@ public class PlayerBot {
                 Position to = new Position(newRow, newCol);
 
                 if (fox.canMove(board, to)) {
-                    allMoves.add(new MoveOption(null, fox, from, to));  // ← ИСПРАВЛЕНО
+                    allMoves.add(new MoveOption(null, fox, from, to));
                 }
 
                 newRow = from.getRow() + dir[0] * 2;
@@ -66,14 +64,13 @@ public class PlayerBot {
                 Position jumpTo = new Position(newRow, newCol);
 
                 if (fox.canMove(board, jumpTo)) {
-                    MoveOption move = new MoveOption(null, fox, from, jumpTo);  // ← ИСПРАВЛЕНО
+                    MoveOption move = new MoveOption(null, fox, from, jumpTo);
                     allMoves.add(move);
                     captureMoves.add(move);
                 }
             }
         }
 
-        // Приоритет на взятие
         List<MoveOption> movesToChooseFrom = captureMoves.isEmpty() ? allMoves : captureMoves;
 
         if (!movesToChooseFrom.isEmpty()) {
@@ -81,6 +78,7 @@ public class PlayerBot {
             board.setCell(chosenMove.from.getRow(), chosenMove.from.getCol(), '.');
             board.setCell(chosenMove.to.getRow(), chosenMove.to.getCol(), 'F');
             Fox fox = chosenMove.fox;
+
             if (fox.isCapture(chosenMove.to)) {
                 Position capturedPos = fox.getCapturedGoosePosition(chosenMove.to);
                 board.setCell(capturedPos.getRow(), capturedPos.getCol(), '.');
