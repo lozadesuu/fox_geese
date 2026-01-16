@@ -1,7 +1,7 @@
 package ru.vsu.fox_geese;
 
 public class Board {
-    private char[][] grid;
+    private final char[][] grid;
     private static final int SIZE = 7;
 
     public Board() {

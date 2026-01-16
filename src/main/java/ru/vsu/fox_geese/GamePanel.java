@@ -8,7 +8,6 @@ import java.awt.event.MouseEvent;
 class GamePanel extends JPanel {
     private Game game;
     private Position selectedPos = null;
-    private boolean selectedIsFox = false;
 
     public GamePanel() {
         setBackground(Color.LIGHT_GRAY);
@@ -64,12 +63,7 @@ class GamePanel extends JPanel {
         if (selectedPos != null) {
             Position to = new Position(row, col);
 
-            boolean moveMade = false;
-            if (selectedIsFox) {
-                moveMade = game.makeFoxMove(selectedPos, to);
-            } else {
-                moveMade = game.makeGooseMove(selectedPos, to);
-            }
+            boolean moveMade = game.makeMove(selectedPos, to);
 
             if (moveMade) {
                 selectedPos = null;
@@ -89,7 +83,8 @@ class GamePanel extends JPanel {
                                 repaint();
                             });
                         }
-                    } else if (mode == Game.GameMode.PLAYER_VS_BOT_FOX) {
+                    }
+                    else if (mode == Game.GameMode.PLAYER_VS_BOT_FOX) {
                         if (game.getCurrentState() == Game.GameState.FOX_TURN) {
                             SwingUtilities.invokeLater(() -> {
                                 game.makeBotMoveForFoxes();
@@ -99,7 +94,11 @@ class GamePanel extends JPanel {
                         }
                     }
                 }
+            } else {
+                selectedPos = null;
+                repaint();
             }
+            return;
         }
 
         char cell = board.getCell(row, col);
@@ -107,18 +106,21 @@ class GamePanel extends JPanel {
         if (cell == 'G') {
             if (game.getCurrentState() == Game.GameState.GEESE_TURN) {
                 selectedPos = new Position(row, col);
-                selectedIsFox = false;
+                System.out.println("✅ Выбран гусь на " + selectedPos);
                 repaint();
             } else {
-                System.out.println("Сейчас не ход гусей! Ход: " + game.getCurrentState());
+                System.out.println("❌ Сейчас не ход гусей! Текущий ход: " + game.getCurrentState());
             }
         } else if (cell == 'F') {
             if (game.getCurrentState() == Game.GameState.FOX_TURN) {
                 selectedPos = new Position(row, col);
-                selectedIsFox = true;
-                System.out.println("Выбрана лиса");
+                System.out.println("✅ Выбрана лиса на " + selectedPos);
                 repaint();
+            } else {
+                System.out.println("❌ Сейчас не ход лис! Текущий ход: " + game.getCurrentState());
             }
+        } else if (cell == '.') {
+            System.out.println("Пустая клетка. Выберите фигуру для хода.");
         }
     }
 
@@ -164,7 +166,9 @@ class GamePanel extends JPanel {
                     drawFox(g, x, y, cellSize);
                 }
 
-                if (selectedPos != null && selectedPos.getRow() == row && selectedPos.getCol() == col) {
+                if (selectedPos != null &&
+                        selectedPos.getRow() == row &&
+                        selectedPos.getCol() == col) {
                     g.setColor(new Color(255, 255, 0, 100));
                     g.fillRect(x, y, cellSize, cellSize);
                 }

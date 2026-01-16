@@ -265,4 +265,71 @@ public class Game {
         System.out.println("=== ВСЕ лисы заблокированы! ГУСИ ПОБЕДИЛИ! ===");
         return true;
     }
+
+    public boolean makeMove(Position from, Position to) {
+        Piece selectedPiece = null;
+        for (Piece piece : pieces) {
+            if (piece.isAlive() && piece.getPosition().equals(from)) {
+                selectedPiece = piece;
+                break;
+            }
+        }
+
+        if (selectedPiece == null) {
+            System.out.println("На клетке " + from + " нет фигуры");
+            return false;
+        }
+
+        if (selectedPiece instanceof Fox && currentState != GameState.FOX_TURN) {
+            System.out.println("Сейчас не ход лис!");
+            return false;
+        }
+        if (selectedPiece instanceof Goose && currentState != GameState.GEESE_TURN) {
+            System.out.println("Сейчас не ход гусей!");
+            return false;
+        }
+
+        if (!selectedPiece.canMove(board, to)) {
+            System.out.println(selectedPiece.getClass().getSimpleName() +
+                    " не может сходить с " + from + " на " + to);
+            return false;
+        }
+
+        board.setCell(from.getRow(), from.getCol(), '.');
+        board.setCell(to.getRow(), to.getCol(), selectedPiece.getSymbol());
+
+        if (selectedPiece instanceof Fox) {
+            Fox fox = (Fox) selectedPiece;
+            if (fox.isCapture(to)) {
+                Position capturedPos = fox.getCapturedGoosePosition(to);
+                board.setCell(capturedPos.getRow(), capturedPos.getCol(), '.');
+
+                for (Piece piece : pieces) {
+                    if (piece.isAlive() && piece.getPosition().equals(capturedPos)) {
+                        piece.capture();
+                        geeseEaten++;
+                        System.out.println("Fox съела гуся! Всего: " + geeseEaten);
+                        break;
+                    }
+                }
+            }
+        }
+
+        selectedPiece.setPosition(to);
+
+        currentState = (currentState == GameState.GEESE_TURN)
+                ? GameState.FOX_TURN
+                : GameState.GEESE_TURN;
+
+        if (checkFoxWin()) {
+            currentState = GameState.FOX_WIN;
+            System.out.println("Лисы победили!");
+        } else if (checkGeeseWin()) {
+            currentState = GameState.GEESE_WIN;
+            System.out.println("Гуси победили!");
+        }
+
+        return true;
+    }
+
 }

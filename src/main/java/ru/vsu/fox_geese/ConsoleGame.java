@@ -4,15 +4,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ConsoleGame {
-    private Board board;
-    private List<Fox> foxes;
-    private List<Goose> geese;
+    private final Board board;
+    private final List<Fox> foxes;
+    private final List<Goose> geese;
     private Game.GameState currentState;
-    private Game.GameMode gameMode;
+    private final Game.GameMode gameMode;
     private PlayerBot bot;
     private int geeseEaten;
-    private int totalGeese;
-    private int foxCount;
+    private final int totalGeese;
+    private final int foxCount;
 
     public ConsoleGame(int foxCount, int geeseCount, Game.GameMode gameMode) {
         this.foxCount = foxCount;
