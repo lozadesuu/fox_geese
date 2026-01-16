@@ -1,30 +1,12 @@
 package ru.vsu.fox_geese;
 
-public class Goose {
-    private Position position;
-    private boolean isAlive;
+public class Goose extends Piece {
 
     public Goose(Position position) {
-        this.position = position;
-        this.isAlive = true;
+        super(position, 'G');
     }
 
-    public Position getPosition() {
-        return position;
-    }
-
-    public void setPosition(Position pos) {
-        this.position = pos;
-    }
-
-    public boolean isAlive() {
-        return isAlive;
-    }
-
-    public void capture() {
-        this.isAlive = false;
-    }
-
+    @Override
     public boolean canMove(Board board, Position to) {
         if (!isAlive) return false;
 

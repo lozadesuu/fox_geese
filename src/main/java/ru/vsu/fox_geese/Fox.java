@@ -1,20 +1,12 @@
 package ru.vsu.fox_geese;
 
-public class Fox {
-    private Position position;
+public class Fox extends Piece {
 
     public Fox(Position position) {
-        this.position = position;
+        super(position, 'F');
     }
 
-    public Position getPosition() {
-        return position;
-    }
-
-    public void setPosition(Position pos) {
-        this.position = pos;
-    }
-
+    @Override
     public boolean canMove(Board board, Position to) {
         int fromRow = position.getRow();
         int fromCol = position.getCol();

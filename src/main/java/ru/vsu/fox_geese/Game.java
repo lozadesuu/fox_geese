@@ -19,8 +19,7 @@ public class Game {
     }
 
     private Board board;
-    private List<Fox> foxes;
-    private List<Goose> geese;
+    private List<Piece> pieces;
     private GameState currentState;
     private GameMode gameMode;
     private PlayerBot bot;
@@ -33,8 +32,7 @@ public class Game {
         this.totalGeese = geeseCount;
         this.gameMode = gameMode;
         this.board = new Board();
-        this.foxes = new ArrayList<>();
-        this.geese = new ArrayList<>();
+        this.pieces = new ArrayList<>();
         this.geeseEaten = 0;
 
         if (gameMode == GameMode.PLAYER_VS_BOT_FOX) {
@@ -68,20 +66,40 @@ public class Game {
         return geeseEaten;
     }
 
+    private List<Fox> getFoxes() {
+        List<Fox> foxes = new ArrayList<>();
+        for (Piece piece : pieces) {
+            if (piece instanceof Fox && piece.isAlive()) {
+                foxes.add((Fox) piece);
+            }
+        }
+        return foxes;
+    }
+
+    private List<Goose> getGeese() {
+        List<Goose> geese = new ArrayList<>();
+        for (Piece piece : pieces) {
+            if (piece instanceof Goose && piece.isAlive()) {
+                geese.add((Goose) piece);
+            }
+        }
+        return geese;
+    }
+
     private void initializeGame() {
         board.placeInitialPieces(foxCount, totalGeese);
 
         if (foxCount == 1) {
-            foxes.add(new Fox(new Position(3, 3)));
+            pieces.add(new Fox(new Position(3, 3)));
         } else {
-            foxes.add(new Fox(new Position(3, 2)));
-            foxes.add(new Fox(new Position(3, 4)));
+            pieces.add(new Fox(new Position(3, 2)));
+            pieces.add(new Fox(new Position(3, 4)));
         }
 
         for (int i = 0; i < board.getSize(); i++) {
             for (int j = 0; j < board.getSize(); j++) {
                 if (board.getCell(i, j) == 'G') {
-                    geese.add(new Goose(new Position(i, j)));
+                    pieces.add(new Goose(new Position(i, j)));
                 }
             }
         }
@@ -92,12 +110,12 @@ public class Game {
             return false;
         }
 
-        for (Goose goose : geese) {
-            if (goose.isAlive() && goose.getPosition().equals(from)) {
-                if (goose.canMove(board, to)) {
+        for (Piece piece : pieces) {
+            if (piece instanceof Goose && piece.isAlive() && piece.getPosition().equals(from)) {
+                if (piece.canMove(board, to)) {
                     board.setCell(from.getRow(), from.getCol(), '.');
                     board.setCell(to.getRow(), to.getCol(), 'G');
-                    goose.setPosition(to);
+                    piece.setPosition(to);
                     currentState = GameState.FOX_TURN;
 
                     if (checkGeeseWin()) {
@@ -118,8 +136,9 @@ public class Game {
             return false;
         }
 
-        for (Fox fox : foxes) {
-            if (fox.getPosition().equals(from)) {
+        for (Piece piece : pieces) {
+            if (piece instanceof Fox && piece.getPosition().equals(from)) {
+                Fox fox = (Fox) piece;
                 if (fox.canMove(board, to)) {
                     board.setCell(from.getRow(), from.getCol(), '.');
                     board.setCell(to.getRow(), to.getCol(), 'F');
@@ -128,9 +147,9 @@ public class Game {
                         Position capturedPos = fox.getCapturedGoosePosition(to);
                         board.setCell(capturedPos.getRow(), capturedPos.getCol(), '.');
 
-                        for (Goose goose : geese) {
-                            if (goose.isAlive() && goose.getPosition().equals(capturedPos)) {
-                                goose.capture();
+                        for (Piece p : pieces) {
+                            if (p instanceof Goose && p.isAlive() && p.getPosition().equals(capturedPos)) {
+                                p.capture();
                                 geeseEaten++;
                                 System.out.println("Гусь съеден! Всего съедено: " + geeseEaten);
                                 break;
@@ -157,7 +176,7 @@ public class Game {
 
     public void makeBotMoveForGeese() {
         if (bot != null && currentState == GameState.GEESE_TURN) {
-            bot.makeGooseMove(board, geese);
+            bot.makeGooseMove(board, getGeese());
             currentState = GameState.FOX_TURN;
 
             if (checkFoxWin()) {
@@ -172,11 +191,11 @@ public class Game {
 
     public void makeBotMoveForFoxes() {
         if (bot != null && currentState == GameState.FOX_TURN) {
-            bot.makeFoxMove(board, foxes, geese);
+            bot.makeFoxMove(board, getFoxes(), getGeese());
 
             int alive = 0;
-            for (Goose goose : geese) {
-                if (goose.isAlive()) {
+            for (Piece piece : pieces) {
+                if (piece instanceof Goose && piece.isAlive()) {
                     alive++;
                 }
             }
@@ -196,8 +215,8 @@ public class Game {
 
     private boolean checkFoxWin() {
         int geeseAlive = 0;
-        for (Goose goose : geese) {
-            if (goose.isAlive()) {
+        for (Piece piece : pieces) {
+            if (piece instanceof Goose && piece.isAlive()) {
                 geeseAlive++;
             }
         }
@@ -210,7 +229,7 @@ public class Game {
     }
 
     private boolean checkGeeseWin() {
-        boolean allFoxesSurrounded = true;
+        List<Fox> foxes = getFoxes();
 
         for (Fox fox : foxes) {
             if (!fox.isSurrounded(board)) {
